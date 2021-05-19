@@ -1,0 +1,19 @@
+{
+  "name": "purble-pairs-server",
+  "version": "1.0.0",
+  "description": "翻牌游戏服务端",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon index.js",
+    "prd": "pm2 start index.js --name purble-pairs-server"
+  },
+  "author": "lime2019@foxmail.com",
+  "license": "ISC",
+  "dependencies": {
+    "mysql2": "^2.2.5",
+    "sequelize": "^6.6.2"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.7"
+  }
+}
