@@ -4,8 +4,8 @@
   "description": "记忆翻牌服务端程序",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon index.js",
-    "prd": "pm2 start index.js --name purble-pairs-server"
+    "dev": "nodemon app.js",
+    "prd": "pm2 start index.js --name purble-pairs"
   },
   "author": "lime2019@foxmail.com",
   "license": "ISC",
