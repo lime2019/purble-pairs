@@ -80,4 +80,4 @@ typings/
 .dynamodb/
 
 # 配置文件
-config.js
+purble-pairs-server/config/index.js

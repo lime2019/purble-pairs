@@ -1,6 +1,8 @@
 {
   "name": "purble-pairs-client",
   "version": "0.1.0",
+  "author": "lime2019@foxmail.com",
+  "description": "翻牌游戏客户端",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
@@ -9,11 +11,6 @@
     "electron:build": "vue-cli-service electron:build",
     "postinstall": "electron-builder install-app-deps",
     "postuninstall": "electron-builder install-app-deps"
-  },
-  "build": {
-    "win": {
-      "icon": "./public/favicon.ico"
-    }
   },
   "main": "background.js",
   "dependencies": {

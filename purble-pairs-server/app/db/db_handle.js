@@ -15,6 +15,17 @@ class dbHandle{
     return addResult
   }
   /**
+   * 
+   * @param {string} collectionName 
+   * @param {string} id 
+   * @param {object} updateObj 
+   * @returns 
+   */
+  async updateDocumentById(collectionName,id,updateObj){
+    const updateResult = db.collection(collectionName).doc(id).update(updateObj)
+    return updateResult
+  }
+  /**
    * 更新文档记录
    * @param {string} collectionName 
    * @param {object} updateObj 
@@ -32,12 +43,12 @@ class dbHandle{
    * @param {object} options 
    * @returns 
    */
-  async readDocument(collectionName,query,options){
-    let readResult = {}
-    if(options){
-      readResult = await db.collection(collectionName).where(query).skip(options.skip).limit(options.limit)
-    }
-    readResult = await db.collection(collectionName).where(query)
+  async readDocuments(collectionName,limitNumber = 10,skipNumber = 0,query,fields = {},orderField = "_id",orderType = "desc"){
+    const readResult = await db.collection(collectionName).limit(limitNumber).skip(skipNumber).where(query).field(fields).orderBy(orderField,orderType).get()
+    return readResult
+  }
+  async readDocument(collectionName,query){
+    const readResult = await db.collection(collectionName).limit(1).where(query).get()
     return readResult
   }
   /**
