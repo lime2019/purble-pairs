@@ -1,7 +1,7 @@
 <template>
   <el-container class="container">
     <!-- 遮罩层：登录与注册  -->
-    <el-dialog class="dialog" :title="dialogTitle" :visible.sync="dialogVisible" width="50%" center @close="closeDialog">
+    <el-dialog class="dialog" :title="dialogTitle" :visible.sync="dialogVisible" width="50%" center @close="closeDialog" v-loading="dialogLoading"  :element-loading-text="dialogLoadingText" element-loading-spinner="el-icon-loading" element-loading-background="rgba(0, 0, 0, 0.8)">
       <el-form :model="form">
         <el-form-item label="昵称" v-show="registerStatus" :label-width="formLabelWidth">
           <el-input v-model="form.name" autocomplete="off"></el-input>
@@ -38,7 +38,7 @@
         </el-col>
       </el-row>
     </el-header>
-    <el-main class="main">
+    <el-main id="main">
       <router-view></router-view>
     </el-main>
     <el-footer class="footer" style="height: 24px;">
@@ -59,6 +59,9 @@ export default {
       // 网络状态
       tcpLineStatus : true,
       loading : null,
+      // 遮罩层加载中
+      dialogLoading : false,
+      dialogLoadingText : "",
       // 遮罩层
       dialogTitle : "",
       dialogVisible : false,
@@ -73,6 +76,7 @@ export default {
         userName : "游客",
         userPoints : 0
       },
+      token : "",
     }
   }, 
   watch:{
@@ -87,6 +91,7 @@ export default {
         })
       }else{
         if(this.loading){
+          this.initUser()
           this.loading.close()
         }
       }
@@ -96,20 +101,50 @@ export default {
     // IPC通信：监听用户身份信息
     ipcRenderer.on("tcp",this.tcpMsgHandle)
     ipcRenderer.on("user",this.userMsgHandle)
+    if(!window.token){
+      setTimeout(() => {
+        this.initUser()
+      },500)
+    }
   },
   methods : {
     // IPC：用户信息
     userMsgHandle(event,msg){
-      console.log(msg)
       const { sort } = msg
       if(sort === "init"){
-        this.userInfo = msg.message
+        this.userInfo = msg.userInfo
+        this.token = msg.token
+        window.token = msg.token
+        this.logInStatus = false
       }else if(sort === "login"){
-        this.userInfo = msg.message
+        this.userInfo = msg.userInfo
+        this.token = msg.token
+        window.token = msg.token
         this.logInStatus = true
+        this.dialogLoading = false
+        this.closeDialog()
+        this.$message({
+          message: `登录成功...`,
+          type: 'success'
+        })
       }else if(sort === "register"){
-        this.userInfo = msg.message
+        this.userInfo = msg.userInfo
+        this.token = msg.token
+        window.token = msg.token
+        this.$message({
+          message: `${msg.userInfo.userName} 账号创建成功...`,
+          type: 'success'
+        })
         this.logInStatus = true
+        this.dialogLoading = false
+        this.closeDialog()
+      }else if(sort === "error"){
+        const { msg:message } = msg
+        this.$message({
+          message: message,
+          type: 'warning'
+        })
+        this.dialogLoading = false
       }
     },
     // IPC：TCP通信是否连通
@@ -133,11 +168,24 @@ export default {
         this.dialogType = command
         this.registerStatus = true
       }else if(command === 'logout'){
+        delete window.token
         ipcRenderer.invoke("user",{
-          type : "logout"
+          type : "user",
+          sort : "logout"
         })
         this.logInStatus = false
+        this.token = ""
+        this.userInfo = {
+          userName : "游客",
+          userPoints : 0
+        }
       }
+    },
+    initUser(){
+      ipcRenderer.invoke("user",{
+        type : "user",
+        sort : "init"
+      })
     },
     // 遮罩层操作
     defineDialog(){
@@ -147,13 +195,16 @@ export default {
           sort : "login",
           data : this.form
         })
+        this.dialogLoadingText = "登录中..."
       }else if(this.dialogType === "register"){
         ipcRenderer.invoke("user",{
           type : "user",
           sort : "register",
           data : this.form
         })
+        this.dialogLoadingText = "注册中..."
       }
+      this.dialogLoading = true
     },
     closeDialog(){
       this.dialogVisible = false
@@ -204,6 +255,10 @@ export default {
   }
   .dropdown-item{
     width: 80px;
+  }
+  /* 中间 */
+  #main{
+    padding: 0;
   }
   /* 底部 */
   .footer{

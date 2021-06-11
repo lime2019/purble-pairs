@@ -36,6 +36,10 @@ class dbHandle{
     const updateResult = db.collection(collectionName).where(query).update(updateObj)
     return updateResult
   }
+  async readDocument(collectionName,query){
+    const readResult = await db.collection(collectionName).limit(1).where(query).get()
+    return readResult
+  }
   /**
    * 读取文档
    * @param {sting} collectionName 
@@ -45,10 +49,6 @@ class dbHandle{
    */
   async readDocuments(collectionName,limitNumber = 10,skipNumber = 0,query,fields = {},orderField = "_id",orderType = "desc"){
     const readResult = await db.collection(collectionName).limit(limitNumber).skip(skipNumber).where(query).field(fields).orderBy(orderField,orderType).get()
-    return readResult
-  }
-  async readDocument(collectionName,query){
-    const readResult = await db.collection(collectionName).limit(1).where(query).get()
     return readResult
   }
   /**

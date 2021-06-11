@@ -6,7 +6,7 @@ const { addDocument,updateDocumentById } = require("../db/db_handle")
  * @param {object} serverList 
  */
 module.exports = async (socket,serverList) => {
-  const { _id } = socket.userInfo
+  const id = socket.userId
   // 日志信息
   const log = {
     type : "socket close",
@@ -14,7 +14,7 @@ module.exports = async (socket,serverList) => {
     port : socket.remotePort,
     family : socket.remoteFamily
   }
-  await updateDocumentById("purble_pairs_user",_id,{ userOnlineStatus : false })
+  await updateDocumentById("purble_pairs_user",id,{ userOnlineStatus : 0 })
   await addDocument("purble_pairs_log",log)
-  delete serverList[_id]
+  delete serverList[id]
 }

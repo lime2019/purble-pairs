@@ -9,7 +9,6 @@ const tcpServerOptions = {
 }
 let mainWindow = null
 let tcpClient = null
-let lineStatus = true
 
 Menu.setApplicationMenu(null)
 
@@ -19,8 +18,8 @@ protocol.registerSchemesAsPrivileged([
 
 async function createMainWindow() {
   const win = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: 1600,
+    height: 800,
     title : "Lime翻牌游戏",
     icon : "src/assets/logo.ico",
     webPreferences: {
@@ -28,7 +27,7 @@ async function createMainWindow() {
       preload: path.join(__dirname, 'preload.js')
     }
   })
-
+  win.maximize()
   if (process.env.WEBPACK_DEV_SERVER_URL) {
     await win.loadURL(process.env.WEBPACK_DEV_SERVER_URL)
     if (!process.env.IS_TEST) win.webContents.openDevTools()
@@ -59,7 +58,6 @@ app.on('ready', async () => {
     })
   })
   tcpClient.on("close",() => {
-    lineStatus = false 
     mainWindow.webContents.send("tcp",{
       type : "offline",
       message : "TCP连接断开..."
@@ -73,13 +71,9 @@ app.on('ready', async () => {
     const receivedMsg = JSON.parse(receivedData)
     const { type } = receivedMsg
     if(type === "user"){
-      mainWindow.webContents.send("user",{
-        message : receivedMsg
-      })
+      mainWindow.webContents.send("user", receivedMsg)
     }else if(type === "game"){
-      mainWindow.webContents.send("game",{
-        message : receivedMsg
-      })
+      mainWindow.webContents.send("game", receivedMsg)
     }
   })
   // IPC监听
@@ -92,5 +86,9 @@ app.on('ready', async () => {
       const sendMsg = JSON.stringify(msg)
       tcpClient.write(sendMsg)
     }
+  })
+  ipcMain.handle("game",(event,msg) => {
+    const sendMsg = JSON.stringify(msg)
+    tcpClient.write(sendMsg)
   })
 })

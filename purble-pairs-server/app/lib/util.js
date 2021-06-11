@@ -10,13 +10,16 @@ const generateToken = ( payload,expiresIn = 60*60*2 ) => {
 }
 
 const verifyToken = (token) => {
-  let validity = true
+  let verifyResult = {
+    validity : true
+  }
   jwt.verify(token,tokenSecret,(err, decoded) => {
     if(err){
-      validity = false
+      verifyResult.validity = false
     }
+    verifyResult.userInfo = decoded
   })
-  return validity
+  return verifyResult
 }
 
 module.exports = {

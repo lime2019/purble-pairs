@@ -2,10 +2,6 @@ const { addDocument } = require("../db/db_handle")
 const { generateToken } = require("../lib/util")
 
 module.exports = async (socket,serverList) => {
-  // 设置当前socket超时时间：2h
-  socket.setTimeout(1000*60*60*2)
-  // 设置socket编码格式
-  socket.setEncoding("utf-8")
   // 初始化用户Id
   const userId = Date.now().toString()
   // 将socket存储到serverList中
@@ -13,23 +9,21 @@ module.exports = async (socket,serverList) => {
   const userInfo = {
     _id : userId,
     userName : "游客" + userId,
-    userPoints : 0
+    userPoints : 0,
+    userOnlineStatus : 1,
   }
   const userToken = generateToken(userInfo)
-  userInfo.userToken = userToken
-  const sendMsg = {
+  const message = {
     type : "user",
     sort : "init",
-    data : userInfo
+    userInfo : userInfo,
+    token : userToken
   }
   // 序列化信息
-  const message = JSON.stringify(sendMsg)
+  const sendMsg = JSON.stringify(message)
   // 向客户端发送分配的用户信息
-  socket.write(message)
-  delete userInfo.userToken
+  socket.write(sendMsg)
   socket.userInfo = userInfo
-  userInfo.userOnlineStatus = true
-  userInfo.userPoints = 0
   // 日志信息
   const log = {
     type : "connection",

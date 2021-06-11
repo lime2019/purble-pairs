@@ -1,7 +1,6 @@
 const net = require("net")
 
 const { PORT,HOST } = require("./config")
-const initServer = require("./app/handle/init_server")
 const closeSocket = require("./app/handle/close_socket")
 const errorSocket = require("./app/handle/error_socket")
 const dataSocket = require("./app/handle/data_socket")
@@ -23,14 +22,17 @@ server.on("listening",() => {
 
 // "connection"事件
 server.on("connection",async (socket) => {
-  // 初始化连接信息
-  await initServer(socket,serverList)
+  // 设置当前socket超时时间：2h
+  socket.setTimeout(1000*60*60*2)
+  // 设置socket编码格式
+  socket.setEncoding("utf-8")
   // socket close事件处理
   socket.on("close",async (err) => {
     if(err){
       console.log("数据传输错误...")
     }
-    console.log(`${socket.userInfo.userName} 客户端 连接已关闭...`)
+    const socketName = socket.userName || ""
+    console.log(`${socketName} 客户端 连接已关闭...`)
     await closeSocket(socket,serverList)
   })
   // socket data事件处理
@@ -40,18 +42,21 @@ server.on("connection",async (socket) => {
   })
   // sock end事件处理
   socket.on("end",() => {
-    console.log(`${socket.userInfo.userName} 客户端 请求关闭当前连接...`)
+    const socketName = socket.userName || ""
+    console.log(`${socketName} 客户端 请求关闭当前连接...`)
   })
   // socket error事件
   socket.on("error",async (err) => {
-    console.log(`${socket.userInfo.userName} 客户端 出现错误，错误内容：`,err)
+    const socketName = socket.userName || ""
+    console.log(`${socketName} 出现错误，错误内容：`,err)
     await errorSocket(socket,err)
     // 关闭当前socket
     socket.end()
   })
   // socket timeout事件
   socket.on("timeout",() => {
-    console.log(`${socket.userInfo.userName} 客户端 连接超时`)
+    const socketName = socket.userName || ""
+    console.log(`${socketName} 客户端 连接超时...`)
     socket.end()
   })
 })
