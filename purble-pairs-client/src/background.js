@@ -1,21 +1,21 @@
 import { app, protocol,Menu, BrowserWindow,ipcMain } from 'electron'
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 const path = require("path")
-const net = require("net")
+const net = require("net")  
 const tcpServerOptions = {
-  // host : "81.69.59.56",
-  host:"localhost",
-  port : 6666
+  // host : "81.69.59.56", 
+  host:"localhost", 
+  port : 6666  
 }
 let mainWindow = null
 let tcpClient = null
-
+ 
 Menu.setApplicationMenu(null)
 
 protocol.registerSchemesAsPrivileged([
   { scheme: 'app', privileges: { secure: true, standard: true } }
 ])
-
+  
 async function createMainWindow() {
   const win = new BrowserWindow({
     width: 1600,
@@ -41,7 +41,7 @@ async function createMainWindow() {
 function createTCP(){
   const client = net.createConnection(tcpServerOptions)
   client.setEncoding("utf-8")
-  return client
+  return client 
 }
 
 app.on('ready', async () => {
@@ -49,12 +49,12 @@ app.on('ready', async () => {
   tcpClient = await createTCP()
   tcpClient.on("error",(err) => {
     console.log("出现错误...")
-  })
+  })  
   tcpClient.on("connect",() => {
     console.log("连接上...")
     mainWindow.webContents.send("tcp",{
       type : "online",
-      message : "TCP连接上..."
+      message : "TCP连接上..." 
     })
   })
   tcpClient.on("close",() => {
@@ -66,29 +66,33 @@ app.on('ready', async () => {
       console.log(`TCP连接重连中...`)
       tcpClient.connect(tcpServerOptions)
     },10000)
-  })
-  tcpClient.on("data",(receivedData) => {
+  })  
+  tcpClient.on("data",(receivedData) => { 
     const receivedMsg = JSON.parse(receivedData)
     const { type } = receivedMsg
-    if(type === "user"){
+    if(type === "user"){    
       mainWindow.webContents.send("user", receivedMsg)
     }else if(type === "game"){
+      console.log("gameInfo:",receivedMsg)
       mainWindow.webContents.send("game", receivedMsg)
-    }
+    } 
   })
-  // IPC监听
+  // IPC监听  
   ipcMain.handle("user",(event,msg) => {
     const { sort } = msg
-    console.log(msg)
+    console.log(msg) 
     if(sort === "logout"){
       tcpClient.end()
     }else{
       const sendMsg = JSON.stringify(msg)
-      tcpClient.write(sendMsg)
-    }
+      tcpClient.write(sendMsg) 
+    } 
+    event.sender.send("send","收到消息...")
   })
   ipcMain.handle("game",(event,msg) => {
+    console.log(msg)
     const sendMsg = JSON.stringify(msg)
     tcpClient.write(sendMsg)
+    event.sender.send("send","收到消息...")
   })
 })

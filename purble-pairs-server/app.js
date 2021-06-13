@@ -4,7 +4,7 @@ const { PORT,HOST } = require("./config")
 const closeSocket = require("./app/handle/close_socket")
 const errorSocket = require("./app/handle/error_socket")
 const dataSocket = require("./app/handle/data_socket")
-
+const { guessingTimeOut,operationTimeOut } = require("./app/handle/timeout_handle")
 // 记录全部TCP连接
 const serverList = {}
 
@@ -22,9 +22,8 @@ server.on("listening",() => {
 
 // "connection"事件
 server.on("connection",async (socket) => {
-  // 设置当前socket超时时间：2h
+  // 设置当前socket超时时间：2h、socket编码格式
   socket.setTimeout(1000*60*60*2)
-  // 设置socket编码格式
   socket.setEncoding("utf-8")
   // socket close事件处理
   socket.on("close",async (err) => {
@@ -54,10 +53,21 @@ server.on("connection",async (socket) => {
     socket.end()
   })
   // socket timeout事件
-  socket.on("timeout",() => {
-    const socketName = socket.userName || ""
-    console.log(`${socketName} 客户端 连接超时...`)
-    socket.end()
+  socket.on("timeout",async () => {
+    if(socket.gameStatus === "guessing"){
+      console.log("猜拳超时...")
+      await guessingTimeOut(socket)
+    }else if(socket.gameStatus === "init"){
+      console.log("设置超时...")
+      await initTimeOut(socket)
+    }else if(socket.gameStatus === "operation"){
+      console.log("操作超时...")
+      await operationTimeOut(socket)
+    }else{
+      const socketName = socket.userName || ""
+      console.log(`${socketName} 客户端 连接超时...`)
+      socket.end()
+    }
   })
 })
 

@@ -2,6 +2,7 @@
   <el-row class="home">
     <el-col class="col home-main" :span="16">
       <el-button class="looking-btn" type="primary" :icon="btnIcon" @click="lookBtn">{{btnText}}</el-button>
+      <h2>积分：{{userPoints}}</h2>
     </el-col>
     <el-col class="scoreboard" :span="8">
       <header class="scoreboard-header">
@@ -27,14 +28,17 @@ export default {
       btnIcon : "el-icon-search",
       btnText : "寻找对局",
       refreshBtnTcon : "el-icon-refresh",
+      userPoints : 0,
       // 排行榜
       userList : []
     }
   },
   mounted(){
+    const ipcRenderer = window.ipcRenderer
+    this.getUserPoints()
     setTimeout(() => {
       this.refreshScoreboard()
-    },1000)
+    },300)
     // IPC通信：监听用户身份信息
     ipcRenderer.on("user",this.userMsgHandle)
     ipcRenderer.on("game",this.gameMsgHandle)
@@ -55,9 +59,13 @@ export default {
     // 收到主进程信息
     userMsgHandle(event,msg){
       const { sort } = msg
+      console.log(msg)
       if(sort === "userlist"){
         this.userList = msg.msg
         this.refreshBtnTcon = "el-icon-refresh"
+      }else if(sort === "points"){
+        const { userPoints } = msg
+        this.userPoints = userPoints
       }
     },
     gameMsgHandle(event,msg){
@@ -68,7 +76,10 @@ export default {
           message: "已找到游戏对局...",
           type: 'success'
         })
-        this.$router.push({ path : "/game",query:{gameId : gameId}})
+        window.gameId = gameId
+        if (this.$route.path !== "/game") {
+          this.$router.replace({ path : "/game" })
+        }
       }
     },
     // 按键
@@ -102,7 +113,17 @@ export default {
         sort : "scoreboard"
       })
       this.refreshBtnTcon = "el-icon-loading"
+    },
+    getUserPoints(){
+      ipcRenderer.invoke("user",{
+        type : "user",
+        sort : "points"
+      })
     }
+  },
+  beforeDestroy(){
+    ipcRenderer.removeAllListeners("user")
+    ipcRenderer.removeAllListeners("game")
   }
 }
 </script>

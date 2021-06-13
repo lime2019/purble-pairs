@@ -1,5 +1,5 @@
 const bcrypt = require("bcrypt")
-const { readDocuments,readDocument, addDocument,updateDocumentById } = require("../db/db_handle")
+const { readDocuments,readDocument, addDocument,updateDocumentById, readDocumentById } = require("../db/db_handle")
 const db = require("../db/index")
 const _ = db.command
 
@@ -8,6 +8,15 @@ class UserCtl{
     // 获取游戏积分最高十人
     const readResult = await readDocuments("purble_pairs_user",10,0,{ userPoints : _.gte(0) },{userName : true,userPoints : true,userOnlineStatus : true},"userPoints","desc")
     return readResult.data
+  }
+  async getUserPointsById(userId){
+    const readResult = await readDocumentById("purble_pairs_user",userId)
+    let points = 0
+    if(readResult.data[0]){
+      const { userPoints } = readResult.data[0]
+      points = userPoints
+    }
+    return points
   }
   async createUser(userInfo){
     const { userName,userAccount } = userInfo

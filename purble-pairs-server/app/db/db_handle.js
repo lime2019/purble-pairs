@@ -36,6 +36,10 @@ class dbHandle{
     const updateResult = db.collection(collectionName).where(query).update(updateObj)
     return updateResult
   }
+  async readDocumentById(collectionName,id){
+    const readResult = await db.collection(collectionName).doc(id).get()
+    return readResult
+  }
   async readDocument(collectionName,query){
     const readResult = await db.collection(collectionName).limit(1).where(query).get()
     return readResult

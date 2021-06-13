@@ -20,21 +20,18 @@
     </el-dialog>
     <el-header class="header">
       <el-row>
-        <el-col :span="12" class="title">
+        <el-col :span="16" class="title">
           Lime翻牌游戏
         </el-col>
         <el-col :span="8">
           <el-dropdown @command="handleCommand">
-            <el-button type="success">{{userInfo.userName}}</el-button>
+            <el-button type="success">{{userName}}</el-button>
             <el-dropdown-menu slot="dropdown">
               <el-dropdown-item class="dropdown-item" icon="el-icon-user-solid" v-show="!logInStatus" command = "login">登录</el-dropdown-item>
               <el-dropdown-item class="dropdown-item" divided icon="el-icon-message-solid" v-show="!logInStatus" command = "register">注册</el-dropdown-item>
               <el-dropdown-item class="dropdown-item" icon="el-icon-s-promotion" v-show="logInStatus" command = "logout">注销</el-dropdown-item>
             </el-dropdown-menu>
             </el-dropdown>
-        </el-col>
-        <el-col :span="4">
-          <div>积分：{{userInfo.userPoints}}</div>
         </el-col>
       </el-row>
     </el-header>
@@ -72,10 +69,7 @@ export default {
       logInStatus : false,
       registerStatus : false,
       // 用户信息
-      userInfo : {
-        userName : "游客",
-        userPoints : 0
-      },
+      userName : "游客",
       token : "",
     }
   }, 
@@ -89,10 +83,16 @@ export default {
           spinner: 'el-icon-loading',
           background: 'rgba(0, 0, 0, 0.7)'
         })
+        this.$router.replace({path : "/home"})
       }else{
         if(this.loading){
-          this.initUser()
-          this.loading.close()
+          setTimeout(() => {
+            ipcRenderer.on("tcp",this.tcpMsgHandle)
+            ipcRenderer.on("user",this.userMsgHandle)
+            this.initUser()
+            this.loading.close()
+            console.log("重连...")
+          },500)
         }
       }
     }
@@ -106,18 +106,30 @@ export default {
         this.initUser()
       },500)
     }
+    this.$router.replace({ path : "/home" })
   },
   methods : {
+    // IPC：TCP通信是否连通
+    tcpMsgHandle(event,msg){
+      const { type } = msg
+      if(type === "offline"){
+        this.tcpLineStatus = false
+      }else if(type === "online"){
+        this.tcpLineStatus = true
+      }
+    },
     // IPC：用户信息
     userMsgHandle(event,msg){
       const { sort } = msg
       if(sort === "init"){
-        this.userInfo = msg.userInfo
+        const { userName } = msg.userInfo
+        this.userName = userName
         this.token = msg.token
         window.token = msg.token
         this.logInStatus = false
-      }else if(sort === "login"){
-        this.userInfo = msg.userInfo
+      }else if(sort === "login"){        
+        const { userName } = msg.userInfo
+        this.userName = userName
         this.token = msg.token
         window.token = msg.token
         this.logInStatus = true
@@ -128,15 +140,16 @@ export default {
           type: 'success'
         })
       }else if(sort === "register"){
-        this.userInfo = msg.userInfo
+        this.logInStatus = true
+        this.dialogLoading = false
+        const { userName } = msg.userInfo
+        this.userName = userName
         this.token = msg.token
         window.token = msg.token
         this.$message({
           message: `${msg.userInfo.userName} 账号创建成功...`,
           type: 'success'
         })
-        this.logInStatus = true
-        this.dialogLoading = false
         this.closeDialog()
       }else if(sort === "error"){
         const { msg:message } = msg
@@ -145,15 +158,6 @@ export default {
           type: 'warning'
         })
         this.dialogLoading = false
-      }
-    },
-    // IPC：TCP通信是否连通
-    tcpMsgHandle(event,msg){
-      const { type } = msg
-      if(type === "offline"){
-        this.tcpLineStatus = false
-      }else if(type === "online"){
-        this.tcpLineStatus = true
       }
     },
     // 下拉列表
@@ -214,6 +218,10 @@ export default {
       this.registerStatus = false
     },
   },
+  beforeDestroy(){
+    ipcRenderer.removeAllListeners("tcp")
+    ipcRenderer.removeAllListeners("user")
+  }
 }
 </script>
 
